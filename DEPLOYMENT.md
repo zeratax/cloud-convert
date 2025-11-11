@@ -2,29 +2,19 @@
 
 This guide will help you deploy and test the cloud video conversion system.
 
-## System Status
+## System Overview
 
-✅ **Completed:**
-- Dependencies installed with uv
-- AWS S3 credentials configured
-- Test video (Big Buck Bunny, 150 MB, 9.9 minutes) uploaded to S3
-- Job state management tested
-- Video analysis and chunking logic verified
+**Production-Ready:**
+- ✅ iw3 with VDA_L model for 3D conversion
+- ✅ Full Side-by-Side (SBS) output for VR compatibility
+- ✅ Parallel GPU processing on Modal
+- ✅ S3 state management for resumability
+- ✅ Smart video chunking with overlap
 
-⚠️ **Requires Modal Deployment:**
-- Modal app needs to be deployed
-- AWS credentials need to be added as Modal secret
-- Actual GPU processing will happen after deployment
-
-## Test Video Details
-
-**Already in S3:**
-- Location: `s3://dmnd-cloud-convert/inputs/36caa6c5-864a-4803-acc6-226ed9442aca/big_buck_bunny.mp4`
-- Size: 150.7 MB
-- Duration: 596 seconds (9.9 minutes)
-- Will be split into: **8 chunks** (~75 seconds each)
-
-This is perfect for testing the parallel processing!
+**Requires Setup:**
+- ⚠️ Modal app deployment
+- ⚠️ AWS credentials as Modal secret
+- ⚠️ Local .env configuration
 
 ## Step-by-Step Deployment
 
@@ -92,29 +82,24 @@ This will:
 
 ### 5. Run Test Conversion
 
-#### Option A: Use the CLI
+Download a test video and convert it:
 
 ```bash
-# Full conversion
+# Download Big Buck Bunny (10 minute test video)
+wget -O big_buck_bunny.mp4 "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+
+# Convert to 3D (will split into 8 chunks)
 uv run python cli.py convert big_buck_bunny.mp4 -o big_buck_bunny_3d.mp4
 
-# Check status
+# Or test with a shorter video first:
+wget -O test_short.mp4 "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+uv run python cli.py convert test_short.mp4 -o test_short_3d.mp4
+
+# Check job status
 uv run python cli.py list-jobs
 
 # Resume if needed
-uv run python cli.py convert big_buck_bunny.mp4 --resume <job-id>
-```
-
-#### Option B: Use Existing Upload
-
-Since Big Buck Bunny is already in S3, you can test with a smaller video first:
-
-```bash
-# Download a short test video (1 minute)
-wget -O test_short.mp4 "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
-
-# Convert it (will use single GPU, no splitting)
-uv run python cli.py convert test_short.mp4 -o test_short_3d.mp4
+uv run python cli.py convert video.mp4 --resume <job-id>
 ```
 
 ## What to Expect
@@ -185,44 +170,30 @@ uv run python cli.py list-jobs
 modal app logs video-3d-converter
 ```
 
-## Configuring iw3
+## iw3 / VDA_L Configuration
 
-The current system uses FFmpeg re-encoding as a placeholder. To use actual 3D conversion:
+The system is **already configured** with iw3 and the Video Depth Anything Large (VDA_L) model:
 
-### Edit `modal_app.py` line 111-131:
+### Current Settings:
+- **Model**: VDA_L (Video Depth Anything Large)
+- **Output Format**: Full Side-by-Side (SBS) for VR headsets
+- **Divergence**: 2.0 (3D strength)
+- **Convergence**: 0.5 (edge viewing comfort)
 
-Replace the placeholder with your iw3 command:
+### Customization:
 
-```python
-# Option 1: iw3 CLI
-iw3_cmd = [
-    "iw3", "convert",
-    str(chunk_path),
-    str(output_path),
-    "--model", "depth-anything",
-    "--format", "side-by-side",
-]
-subprocess.run(iw3_cmd, check=True)
-
-# Option 2: iw3 Python API
-from iw3 import convert_to_3d
-convert_to_3d(
-    str(chunk_path),
-    str(output_path),
-    model="depth-anything",
-    format="side-by-side"
-)
-```
-
-### Update iw3 installation (line 30-36):
+To adjust 3D parameters, modify `modal_app.py` line 124-127:
 
 ```python
-.run_commands(
-    "pip install git+https://github.com/your-iw3-repo/iw3.git",
-    # Or install from PyPI:
-    # "pip install iw3",
-)
+"--divergence", "3.0",     # Stronger 3D (1.0-4.0)
+"--convergence", "0.7",    # Better for curved displays (0.0-1.0)
 ```
+
+Or use different depth models:
+- `VDA_L` - Video Depth Anything Large (default, best quality)
+- `VDA_Metric_L` - With metric depth
+- `DA_V2_L` - Depth Anything V2 Large
+- `ZoeDepth` - Alternative depth model
 
 Then redeploy:
 ```bash
@@ -273,14 +244,20 @@ Add `s3:GetObject` permission to IAM user policy
 4. Configure actual iw3 conversion
 5. Process your own videos!
 
-## S3 Resources
+## S3 Structure
 
-Current uploads:
-- `s3://dmnd-cloud-convert/inputs/36caa6c5-864a-4803-acc6-226ed9442aca/big_buck_bunny.mp4`
+After processing videos, your S3 bucket will contain:
 
-After processing, you'll see:
-- `s3://dmnd-cloud-convert/states/<job-id>.state.json` (job state)
-- `s3://dmnd-cloud-convert/outputs/<job-id>/chunk_000.mp4` (processed chunks)
-- `s3://dmnd-cloud-convert/outputs/<job-id>/chunk_001.mp4`
-- ...
-- `s3://dmnd-cloud-convert/outputs/<job-id>/final.mp4` (combined result)
+```
+s3://your-bucket/
+├── inputs/<job-id>/
+│   └── video.mp4                    # Original uploaded video
+├── states/<job-id>.state.json       # Job state for resumability
+└── outputs/<job-id>/
+    ├── chunk_000.mp4                # Processed chunk 0
+    ├── chunk_001.mp4                # Processed chunk 1
+    ├── ...
+    └── final.mp4                    # Combined 3D result
+```
+
+**Note**: The final 3D video will have `_LRF_Full_SBS` in the filename for VR player compatibility.

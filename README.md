@@ -1,6 +1,6 @@
 # Cloud Convert - 3D Video Conversion
 
-Cloud-based 3D video conversion using [Modal](https://modal.com) GPU infrastructure and [iw3](https://github.com/TGSAI/IW3) for immersive video conversion.
+Cloud-based 3D video conversion using [Modal](https://modal.com) GPU infrastructure and [iw3](https://github.com/nagadomi/nunif) (nunif) for immersive video conversion using the Video Depth Anything Large (VDA_L) model.
 
 ## Features
 
@@ -221,29 +221,36 @@ Each chunk is processed independently:
 
 No wasted GPU time reprocessing successful chunks!
 
-## iw3 Configuration
+## iw3 / VDA_L Model
 
-The Modal worker uses iw3 for 3D conversion. You need to configure the actual iw3 installation and usage:
+The system uses **iw3** (from [nagadomi/nunif](https://github.com/nagadomi/nunif)) with the **Video Depth Anything Large (VDA_L)** model for 3D conversion:
 
-**Edit `modal_app.py` line 25-28** to install iw3 properly:
+### Features:
+- **Model**: VDA_L (Video Depth Anything Large) - temporal consistency for smooth video
+- **Output Format**: Full Side-by-Side (SBS) for VR headset compatibility
+- **Depth Estimation**: AI-powered monocular depth estimation
+- **Quality Settings**:
+  - Divergence: 2.0 (3D strength)
+  - Convergence: 0.5 (edge viewing comfort)
+
+### Customization:
+
+You can adjust 3D parameters by passing model_config to the converter:
 
 ```python
-.run_commands(
-    "pip install git+https://github.com/TGSAI/IW3.git"
+from converter import VideoConverter
+
+converter = VideoConverter(s3_bucket="your-bucket")
+converter.convert_video(
+    "video.mp4",
+    model_config={
+        "divergence": 3.0,    # Stronger 3D effect (1.0-4.0)
+        "convergence": 0.7,   # Better for curved displays (0.0-1.0)
+    }
 )
 ```
 
-**Edit `modal_app.py` line 75-95** to use iw3's actual API:
-
-```python
-# Option 1: CLI tool
-iw3_cmd = ["iw3", "convert", input, output, "--model", model_name]
-subprocess.run(iw3_cmd, check=True)
-
-# Option 2: Python API
-from iw3 import convert_to_3d
-convert_to_3d(input, output, model=model_name)
-```
+Or via CLI (future enhancement - currently uses defaults).
 
 ## Cost Optimization
 
@@ -321,5 +328,5 @@ MIT License - see LICENSE file for details
 ## Acknowledgments
 
 - [Modal](https://modal.com) for GPU infrastructure
-- [iw3](https://github.com/TGSAI/IW3) for 3D conversion
+- [nagadomi/nunif](https://github.com/nagadomi/nunif) for iw3 and VDA_L 3D conversion
 - [FFmpeg](https://ffmpeg.org) for video processing

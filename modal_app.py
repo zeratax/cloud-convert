@@ -18,22 +18,28 @@ image = (
         "ffmpeg",
         "libsm6",
         "libxext6",
+        "libxrender1",
+        "libgomp1",
         "git",
     )
     .pip_install(
         "boto3",
         "ffmpeg-python",
-        "torch",
-        "torchvision",
-        "torchaudio",
     )
+    # Install PyTorch with CUDA support
+    .pip_install(
+        "torch>=2.0.0",
+        "torchvision>=0.15.0",
+        index_url="https://download.pytorch.org/whl/cu121",
+    )
+    # Clone and install nunif/iw3
     .run_commands(
-        # Install iw3 - adjust this based on actual iw3 installation method
-        # For testing, we'll skip iw3 installation and use ffmpeg placeholder
-        # Uncomment and adjust when you have the correct iw3 installation:
-        # "pip install git+https://github.com/your-iw3-repo/iw3.git",
-        "echo 'iw3 installation skipped - using ffmpeg placeholder'"
+        "cd /root && git clone https://github.com/nagadomi/nunif.git",
+        "cd /root/nunif && pip install -r requirements.txt",
+        "cd /root/nunif && pip install -r requirements-torch.txt || true",
     )
+    # Set working directory for iw3
+    .env({"PYTHONPATH": "/root/nunif"})
 )
 
 # Create S3 secret for Modal
@@ -105,33 +111,41 @@ def convert_video_chunk(
             ]
             subprocess.run(extract_cmd, check=True, capture_output=True)
 
-            print(f"[Chunk {chunk_id}] Starting 3D conversion with iw3")
+            print(f"[Chunk {chunk_id}] Starting 3D conversion with iw3 (VDA_L model)")
 
-            # Run iw3 conversion
-            # TODO: Replace this with actual iw3 conversion
-            # For testing, we're using a simple re-encode as a placeholder
+            # Run iw3 conversion using Video Depth Anything Large model
+            # Model will be downloaded automatically on first run
+            # Output format: Full Side-by-Side (SBS) for VR compatibility
 
-            # PLACEHOLDER: Simple re-encode to simulate processing
-            # Replace this with actual iw3 command when ready:
-            # Example: iw3 convert input.mp4 output.mp4 --model depth-anything
-
-            print(f"[Chunk {chunk_id}] Using placeholder conversion (re-encode)")
-            placeholder_cmd = [
-                "ffmpeg", "-y",
+            iw3_cmd = [
+                "python", "-m", "iw3",
                 "-i", str(chunk_path),
-                "-c:v", "libx264",
-                "-preset", "medium",
-                "-crf", "23",
-                "-c:a", "aac",
-                "-b:a", "128k",
-                str(output_path)
+                "-o", str(output_path),
+                "--method", "VDA_L",  # Video Depth Anything Large model
+                "--divergence", "2.0",  # Default 3D strength
+                "--convergence", "0.5",  # Edge viewing comfort
+                "--output-format", "full_sbs",  # Full side-by-side
             ]
-            result = subprocess.run(placeholder_cmd, capture_output=True, text=True)
+
+            # Add model config if provided
+            if model_config:
+                if "divergence" in model_config:
+                    iw3_cmd[iw3_cmd.index("--divergence") + 1] = str(model_config["divergence"])
+                if "convergence" in model_config:
+                    iw3_cmd[iw3_cmd.index("--convergence") + 1] = str(model_config["convergence"])
+
+            print(f"[Chunk {chunk_id}] Running: {' '.join(iw3_cmd)}")
+            result = subprocess.run(
+                iw3_cmd,
+                capture_output=True,
+                text=True,
+                cwd="/root/nunif"
+            )
 
             if result.returncode != 0:
-                raise RuntimeError(f"FFmpeg conversion failed: {result.stderr}")
+                raise RuntimeError(f"iw3 conversion failed: {result.stderr}\n{result.stdout}")
 
-            print(f"[Chunk {chunk_id}] Conversion complete (placeholder)")
+            print(f"[Chunk {chunk_id}] 3D conversion complete (VDA_L)")
 
             # Get output file size for metadata
             output_size = output_path.stat().st_size
