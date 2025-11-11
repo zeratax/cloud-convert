@@ -1,0 +1,32 @@
+# Environment
+.env
+venv/
+env/
+*.pyc
+__pycache__/
+.python-version
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+temp/
+tmp/
+output/
+*.mp4
+*.mkv
+*.avi
+*.mov
+*.state.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Modal
+.modal/
