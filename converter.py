@@ -167,7 +167,7 @@ class VideoConverter:
 
         # Lookup deployed Modal function
         from modal import Function
-        convert_video_chunk = Function.lookup("video-3d-converter", "convert_video_chunk")
+        convert_video_chunk = Function.from_name("video-3d-converter", "convert_video_chunk")
 
         # Process chunks in parallel
         results = []
@@ -244,7 +244,7 @@ class VideoConverter:
             return
 
         from modal import Function
-        combine_video_chunks = Function.lookup("video-3d-converter", "combine_video_chunks")
+        combine_video_chunks = Function.from_name("video-3d-converter", "combine_video_chunks")
 
         # Get chunk keys in order
         chunk_keys = [chunk.s3_output_key for chunk in sorted(job_state.chunks, key=lambda c: c.chunk_id)]
