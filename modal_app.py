@@ -29,7 +29,10 @@ image = (
     )
     .run_commands(
         # Install iw3 - adjust this based on actual iw3 installation method
-        "pip install git+https://github.com/TGSAI/IW3.git || echo 'Adjust iw3 install command'"
+        # For testing, we'll skip iw3 installation and use ffmpeg placeholder
+        # Uncomment and adjust when you have the correct iw3 installation:
+        # "pip install git+https://github.com/your-iw3-repo/iw3.git",
+        "echo 'iw3 installation skipped - using ffmpeg placeholder'"
     )
 )
 
@@ -105,31 +108,30 @@ def convert_video_chunk(
             print(f"[Chunk {chunk_id}] Starting 3D conversion with iw3")
 
             # Run iw3 conversion
-            # TODO: Adjust this based on actual iw3 CLI/API
-            # This is a placeholder - you'll need to adjust based on iw3's actual interface
-            try:
-                # Option 1: If iw3 has a CLI
-                iw3_cmd = [
-                    "iw3",
-                    "convert",
-                    str(chunk_path),
-                    str(output_path),
-                    "--model", model_config.get("model", "default") if model_config else "default",
-                ]
-                subprocess.run(iw3_cmd, check=True, capture_output=True)
+            # TODO: Replace this with actual iw3 conversion
+            # For testing, we're using a simple re-encode as a placeholder
 
-            except FileNotFoundError:
-                # Option 2: If iw3 is a Python library
-                print("[Chunk {chunk_id}] Using iw3 Python API")
-                # Import and use iw3 library here
-                # Example (adjust based on actual API):
-                # from iw3 import convert_to_3d
-                # convert_to_3d(str(chunk_path), str(output_path), **model_config)
+            # PLACEHOLDER: Simple re-encode to simulate processing
+            # Replace this with actual iw3 command when ready:
+            # Example: iw3 convert input.mp4 output.mp4 --model depth-anything
 
-                # For now, copy as placeholder
-                import shutil
-                shutil.copy(chunk_path, output_path)
-                print(f"[Chunk {chunk_id}] WARNING: Using placeholder conversion - configure iw3 properly!")
+            print(f"[Chunk {chunk_id}] Using placeholder conversion (re-encode)")
+            placeholder_cmd = [
+                "ffmpeg", "-y",
+                "-i", str(chunk_path),
+                "-c:v", "libx264",
+                "-preset", "medium",
+                "-crf", "23",
+                "-c:a", "aac",
+                "-b:a", "128k",
+                str(output_path)
+            ]
+            result = subprocess.run(placeholder_cmd, capture_output=True, text=True)
+
+            if result.returncode != 0:
+                raise RuntimeError(f"FFmpeg conversion failed: {result.stderr}")
+
+            print(f"[Chunk {chunk_id}] Conversion complete (placeholder)")
 
             # Get output file size for metadata
             output_size = output_path.stat().st_size
