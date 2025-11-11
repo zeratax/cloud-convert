@@ -173,11 +173,12 @@ class StateManager:
         self.save_state(job_state)
 
     def get_pending_chunks(self, job_state: JobState) -> List[ChunkState]:
-        """Get all chunks that need processing (pending or failed with retries)."""
+        """Get all chunks that need processing (pending, processing, or failed with retries)."""
         max_retries = 3
         return [
             chunk for chunk in job_state.chunks
             if chunk.status == ChunkStatus.PENDING or
+            chunk.status == ChunkStatus.PROCESSING or  # Include stuck processing chunks
             (chunk.status == ChunkStatus.FAILED and chunk.attempt_count < max_retries)
         ]
 
