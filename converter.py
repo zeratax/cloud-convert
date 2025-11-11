@@ -165,8 +165,9 @@ class VideoConverter:
 
         print(f"\nProcessing {len(pending_chunks)} chunks on Modal...")
 
-        # Import Modal function
-        from modal_app import convert_video_chunk
+        # Lookup deployed Modal function
+        import modal
+        convert_video_chunk = modal.Function.lookup("video-3d-converter", "convert_video_chunk")
 
         # Process chunks in parallel
         results = []
@@ -243,7 +244,7 @@ class VideoConverter:
             return
 
         import modal
-        from modal_app import combine_video_chunks
+        combine_video_chunks = modal.Function.lookup("video-3d-converter", "combine_video_chunks")
 
         # Get chunk keys in order
         chunk_keys = [chunk.s3_output_key for chunk in sorted(job_state.chunks, key=lambda c: c.chunk_id)]
