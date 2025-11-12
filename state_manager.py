@@ -158,7 +158,7 @@ class StateManager:
         if status == ChunkStatus.COMPLETED:
             chunk.completed_at = datetime.utcnow().isoformat()
 
-        if status in [ChunkStatus.PROCESSING, ChunkStatus.FAILED]:
+        if status == ChunkStatus.FAILED:
             chunk.attempt_count += 1
 
         # Update overall job status
