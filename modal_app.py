@@ -33,14 +33,11 @@ image = (
         "torchvision>=0.15.0",
         index_url="https://download.pytorch.org/whl/cu121",
     )
-    # Clone and install nunif/iw3
+    # Clone and install nunif/iw3, then download VDA_L model
     .run_commands(
         "cd /root && git clone https://github.com/nagadomi/nunif.git",
         "cd /root/nunif && pip install -r requirements.txt",
         "cd /root/nunif && pip install -r requirements-torch.txt || true",
-    )
-    # Download VDA_L model checkpoint from Hugging Face
-    .run_commands(
         "mkdir -p /root/nunif/iw3/pretrained_models/hub/checkpoints",
         "cd /root/nunif/iw3/pretrained_models/hub/checkpoints && "
         "wget -q https://huggingface.co/depth-anything/Metric-Video-Depth-Anything-Large/resolve/main/video_depth_anything_vitl.pth",
