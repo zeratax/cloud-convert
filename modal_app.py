@@ -114,7 +114,7 @@ def convert_video_chunk(
             print(f"[Chunk {chunk_id}] Starting 3D conversion with iw3 (VDA_L model)")
 
             # Run iw3 conversion using Video Depth Anything Large model
-            # Model will be downloaded automatically on first run
+            # Custom settings optimized for quality
             # Output format: Full Side-by-Side (SBS) - default when no format flag specified
 
             iw3_cmd = [
@@ -122,12 +122,24 @@ def convert_video_chunk(
                 "--input", str(chunk_path),
                 "--output", str(output_path),
                 "--depth-model", "VDA_L",  # Video Depth Anything Large model
-                "--divergence", "2.0",  # Default 3D strength
-                "--convergence", "0.5",  # Edge viewing comfort
+                "--method", "mlbw_l2",  # MLBW L2 warping method
+                "--inpaint-model", "default",  # Enable inpainting
+                "--divergence", "4.0",  # 3D strength
+                "--convergence", "0.0",  # Convergence plane
+                "--ipd-offset", "0.0",  # Your own size
+                "--zoed-height", "1036",  # Depth resolution
+                "--foreground-scale", "-0.5",  # Foreground scale
+                "--edge-dilation", "2",  # Edge fix
+                "--depth-aa",  # Depth antialiasing
+                "--ema-normalize",  # Flicker reduction
+                "--ema-decay", "0.75",  # Flicker resolution decay
+                "--ema-buffer", "150",  # Flicker resolution buffer
+                "--scene-detect",  # Scene boundary detection
+                "--preserve-screen-border",  # Preserve screen border
                 "--yes",  # Auto-confirm prompts
             ]
 
-            # Add model config if provided
+            # Add model config if provided (allows runtime override)
             if model_config:
                 if "divergence" in model_config:
                     iw3_cmd[iw3_cmd.index("--divergence") + 1] = str(model_config["divergence"])
