@@ -21,6 +21,7 @@ image = (
         "libxrender1",
         "libgomp1",
         "git",
+        "wget",
     )
     .pip_install(
         "boto3",
