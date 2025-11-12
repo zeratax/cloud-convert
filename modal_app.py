@@ -125,7 +125,7 @@ def convert_video_chunk(
                 "python", "-m", "iw3",
                 "--input", str(chunk_path),
                 "--output", str(output_path),
-                "--depth-model", "VDA_L",  # Video Depth Anything Large model
+                "--depth-model", "VDA_Metric_L",  # Video Depth Anything Metric Large model
                 "--method", "mlbw_l2",  # MLBW L2 warping method
                 "--divergence", "4.0",  # 3D strength
                 "--convergence", "0.0",  # Convergence plane
