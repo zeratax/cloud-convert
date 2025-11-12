@@ -40,7 +40,7 @@ image = (
         "cd /root/nunif && pip install -r requirements-torch.txt || true",
         "mkdir -p /root/nunif/iw3/pretrained_models/hub/checkpoints",
         "cd /root/nunif/iw3/pretrained_models/hub/checkpoints && "
-        "wget -q https://huggingface.co/depth-anything/Metric-Video-Depth-Anything-Large/resolve/main/video_depth_anything_vitl.pth",
+        "wget -q https://huggingface.co/depth-anything/Metric-Video-Depth-Anything-Large/resolve/main/metric_video_depth_anything_vitl.pth",
     )
     # Set working directory for iw3
     .env({"PYTHONPATH": "/root/nunif"})
