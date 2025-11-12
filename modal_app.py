@@ -38,6 +38,12 @@ image = (
         "cd /root/nunif && pip install -r requirements.txt",
         "cd /root/nunif && pip install -r requirements-torch.txt || true",
     )
+    # Download VDA_L model checkpoint from Hugging Face
+    .run_commands(
+        "mkdir -p /root/nunif/iw3/pretrained_models/hub/checkpoints",
+        "cd /root/nunif/iw3/pretrained_models/hub/checkpoints && "
+        "wget -q https://huggingface.co/depth-anything/Metric-Video-Depth-Anything-Large/resolve/main/video_depth_anything_vitl.pth",
+    )
     # Set working directory for iw3
     .env({"PYTHONPATH": "/root/nunif"})
 )
@@ -126,7 +132,7 @@ def convert_video_chunk(
                 "--divergence", "4.0",  # 3D strength
                 "--convergence", "0.0",  # Convergence plane
                 "--ipd-offset", "0.0",  # Your own size
-                "--zoed-height", "1036",  # Depth resolution
+                "--resolution", "1036",  # Depth resolution (replaces deprecated --zoed-height)
                 "--foreground-scale", "-0.5",  # Foreground scale
                 "--edge-dilation", "2",  # Edge fix
                 "--depth-aa",  # Depth antialiasing
