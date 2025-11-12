@@ -115,16 +115,16 @@ def convert_video_chunk(
 
             # Run iw3 conversion using Video Depth Anything Large model
             # Model will be downloaded automatically on first run
-            # Output format: Full Side-by-Side (SBS) for VR compatibility
+            # Output format: Full Side-by-Side (SBS) - default when no format flag specified
 
             iw3_cmd = [
                 "python", "-m", "iw3",
-                "-i", str(chunk_path),
-                "-o", str(output_path),
-                "--method", "VDA_L",  # Video Depth Anything Large model
+                "--input", str(chunk_path),
+                "--output", str(output_path),
+                "--depth-model", "VDA_L",  # Video Depth Anything Large model
                 "--divergence", "2.0",  # Default 3D strength
                 "--convergence", "0.5",  # Edge viewing comfort
-                "--output-format", "full_sbs",  # Full side-by-side
+                "--yes",  # Auto-confirm prompts
             ]
 
             # Add model config if provided
